@@ -1,18 +1,39 @@
 import { diffWords } from 'diff';
 
+// ── State ──────────────────────────────────────────────────────────────────────
+let currentTabId = null;
+let lastDiff     = null; // { changes, sel1, sel2 } — used by copy button
+
 // ── Init ──────────────────────────────────────────────────────────────────────
 async function init() {
-  chrome.runtime.onMessage.addListener((msg) => {
-    if (msg.type === 'STATE_UPDATE') render(msg.state);
+  const tab = await getActiveTab();
+  currentTabId = tab?.id ?? null;
+
+  // Only render STATE_UPDATE from the tab currently visible in this panel
+  chrome.runtime.onMessage.addListener((msg, sender) => {
+    if (msg.type === 'STATE_UPDATE' && sender.tab?.id === currentTabId) {
+      render(msg.state);
+    }
   });
 
-  chrome.tabs.onActivated.addListener(async () => {
+  // User switched to a different tab
+  chrome.tabs.onActivated.addListener(async (info) => {
+    currentTabId = info.tabId;
     const state = await queryState();
     render(state ?? idleState());
   });
 
+  // Current tab navigated to a new page — content script reloaded, state is gone
+  chrome.tabs.onUpdated.addListener((tabId, changeInfo) => {
+    if (tabId === currentTabId && changeInfo.status === 'loading') {
+      render(idleState());
+    }
+  });
+
   const state = await queryState();
   render(state ?? idleState());
+
+  document.getElementById('copy-btn').addEventListener('click', handleCopy);
 }
 
 function idleState() {
@@ -46,10 +67,43 @@ function render(state) {
       SELECTING_2: 'Seleccionando Elemento 2 en la página…',
     };
     document.getElementById('placeholder-msg').textContent = msgs[phase] ?? '';
+    lastDiff = null;
     return;
   }
 
+  lastDiff = { changes: diff, sel1: element1?.selector ?? 'elemento-1', sel2: element2?.selector ?? 'elemento-2' };
   renderDiff(diff, element1, element2);
+}
+
+// ── Copy ──────────────────────────────────────────────────────────────────────
+async function handleCopy() {
+  if (!lastDiff) return;
+  const text = buildUnifiedDiff(lastDiff.changes, lastDiff.sel1, lastDiff.sel2);
+  try {
+    await navigator.clipboard.writeText(text);
+    flashCopyBtn('✓ Copiado');
+  } catch {
+    flashCopyBtn('✗ Error');
+  }
+}
+
+function flashCopyBtn(msg) {
+  const btn = document.getElementById('copy-btn');
+  const original = btn.textContent;
+  btn.textContent = msg;
+  btn.disabled = true;
+  setTimeout(() => { btn.textContent = original; btn.disabled = false; }, 1500);
+}
+
+function buildUnifiedDiff(changes, sel1, sel2) {
+  const lines = [`--- ${sel1}`, `+++ ${sel2}`];
+  changes.forEach(c => {
+    const content = c.value.replace(/\n$/, '').split('\n');
+    if (c.removed)      content.forEach(l => lines.push(`-${l}`));
+    else if (c.added)   content.forEach(l => lines.push(`+${l}`));
+    else                content.forEach(l => lines.push(` ${l}`));
+  });
+  return lines.join('\n');
 }
 
 // ── Diff ──────────────────────────────────────────────────────────────────────
@@ -116,6 +170,7 @@ function renderDiff(changes, el1, el2) {
 
   document.getElementById('no-changes').classList.toggle('hidden', !noChanges);
   document.getElementById('cols-wrap').classList.toggle('hidden',   noChanges);
+  document.getElementById('copy-btn').classList.toggle('hidden', noChanges);
 
   if (!noChanges) {
     document.getElementById('col-left').innerHTML  = buildColHTML(enriched, 'left');

@@ -28,12 +28,6 @@
     "sidePanel",
     "tabs"
   ],
-  "web_accessible_resources": [
-    {
-      "resources": ["index-*.js"],
-      "matches": ["<all_urls>"]
-    }
-  ],
   "content_scripts": [
     {
       "matches": ["<all_urls>"],

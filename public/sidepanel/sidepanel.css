@@ -63,21 +63,41 @@ h1 {
   min-height: 0;
 }
 
-/* ── Diff header (stats + selectors) ────────────────────────────────────── */
-#diff-header {
-  flex-shrink: 0;
-  border-bottom: 1px solid #313244;
-}
-
-#stats {
-  display: block;
+/* ── Diff header (stats + copy button + selectors) ──────────────────────── */
+#diff-header > #stats {
   padding: 6px 14px;
   font-family: 'Consolas', monospace;
   font-size: 12px;
   color: #a6adc8;
+  flex: 1;
+}
+
+#diff-header {
+  display: flex;
+  align-items: center;
   background: #181825;
   border-bottom: 1px solid #313244;
+  flex-shrink: 0;
 }
+
+#copy-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: transparent;
+  border: 1px solid #45475a;
+  color: #a6adc8;
+  border-radius: 4px;
+  padding: 3px 9px;
+  cursor: pointer;
+  font-size: 11px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  margin-right: 10px;
+  transition: background 0.1s, color 0.1s;
+}
+#copy-btn:hover:not(:disabled) { background: #313244; color: #cdd6f4; }
+#copy-btn:disabled { opacity: 0.5; cursor: default; }
 
 #selectors {
   display: flex;
