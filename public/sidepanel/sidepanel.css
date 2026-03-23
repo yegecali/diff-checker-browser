@@ -49,7 +49,7 @@ h1 { font-size: 13px; font-weight: 700; color: #cdd6f4; }
   min-height: 0;
 }
 
-/* ── Diff header row (stats + copy) ─────────────────────────────────────── */
+/* ── Diff header (stats + copy) ─────────────────────────────────────────── */
 #diff-header {
   display: flex;
   align-items: center;
@@ -85,7 +85,6 @@ h1 { font-size: 13px; font-weight: 700; color: #cdd6f4; }
 
 /* ── Selectors ───────────────────────────────────────────────────────────── */
 #selectors { display: flex; flex-direction: column; flex-shrink: 0; }
-
 .d-sel {
   display: flex;
   align-items: center;
@@ -100,109 +99,6 @@ h1 { font-size: 13px; font-weight: 700; color: #cdd6f4; }
 .d-sel-1 .d-sel-dot { background: #89b4fa; }
 .d-sel-2 .d-sel-dot { background: #cba6f7; }
 .d-sel code { font-size: 10px; color: #a6adc8; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-
-/* ── Regex search bar ────────────────────────────────────────────────────── */
-#search-bar {
-  flex-shrink: 0;
-  border-bottom: 1px solid #313244;
-  background: #181825;
-  padding: 7px 10px 6px;
-}
-
-/* Chips row */
-#regex-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 5px;
-  margin-bottom: 6px;
-}
-
-.rx-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  border-radius: 4px;
-  padding: 2px 6px 2px 5px;
-  font-size: 11px;
-  font-family: 'Consolas', monospace;
-  border: 1px solid transparent;
-}
-.rx-chip-swatch {
-  width: 7px; height: 7px;
-  border-radius: 2px;
-  flex-shrink: 0;
-}
-.rx-chip-text { color: #cdd6f4; }
-.rx-chip-del {
-  background: transparent;
-  border: none;
-  color: inherit;
-  cursor: pointer;
-  font-size: 13px;
-  line-height: 1;
-  padding: 0 1px;
-  opacity: 0.6;
-}
-.rx-chip-del:hover { opacity: 1; }
-
-/* 5 color slots */
-.rx-chip-0 { background: rgba(249,199,79,0.12);  border-color: rgba(249,199,79,0.3);  color: #f9c74f; }
-.rx-chip-1 { background: rgba(80,200,220,0.12);  border-color: rgba(80,200,220,0.3);  color: #50c8dc; }
-.rx-chip-2 { background: rgba(248,131,248,0.12); border-color: rgba(248,131,248,0.3); color: #f883f8; }
-.rx-chip-3 { background: rgba(100,220,130,0.12); border-color: rgba(100,220,130,0.3); color: #64dc82; }
-.rx-chip-4 { background: rgba(255,150,80,0.12);  border-color: rgba(255,150,80,0.3);  color: #ff9650; }
-
-.rx-chip-0 .rx-chip-swatch { background: #f9c74f; }
-.rx-chip-1 .rx-chip-swatch { background: #50c8dc; }
-.rx-chip-2 .rx-chip-swatch { background: #f883f8; }
-.rx-chip-3 .rx-chip-swatch { background: #64dc82; }
-.rx-chip-4 .rx-chip-swatch { background: #ff9650; }
-
-/* Input row */
-#search-input-row {
-  display: flex;
-  gap: 5px;
-}
-#regex-input {
-  flex: 1;
-  min-width: 0;
-  background: #313244;
-  border: 1px solid #45475a;
-  color: #cdd6f4;
-  border-radius: 4px;
-  padding: 4px 8px;
-  font-size: 11px;
-  font-family: 'Consolas', monospace;
-}
-#regex-input:focus { outline: none; border-color: #89b4fa; }
-#regex-input::placeholder { color: #45475a; }
-
-#regex-add-btn {
-  background: #313244;
-  border: 1px solid #45475a;
-  color: #cdd6f4;
-  border-radius: 4px;
-  padding: 4px 10px;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 700;
-  flex-shrink: 0;
-  line-height: 1;
-}
-#regex-add-btn:hover { background: #45475a; }
-
-#regex-error {
-  margin-top: 4px;
-  font-size: 11px;
-  color: #f38ba8;
-}
-
-/* ── Regex highlights in diff (5 color slots) ────────────────────────────── */
-span.rx-0 { background: rgba(249,199,79,0.35);  border-radius: 2px; outline: 1px solid rgba(249,199,79,0.5); }
-span.rx-1 { background: rgba(80,200,220,0.35);  border-radius: 2px; outline: 1px solid rgba(80,200,220,0.5); }
-span.rx-2 { background: rgba(248,131,248,0.35); border-radius: 2px; outline: 1px solid rgba(248,131,248,0.5); }
-span.rx-3 { background: rgba(100,220,130,0.35); border-radius: 2px; outline: 1px solid rgba(100,220,130,0.5); }
-span.rx-4 { background: rgba(255,150,80,0.35);  border-radius: 2px; outline: 1px solid rgba(255,150,80,0.5); }
 
 /* ── Sin cambios ─────────────────────────────────────────────────────────── */
 #no-changes {
@@ -284,8 +180,15 @@ span.rx-4 { background: rgba(255,150,80,0.35);  border-radius: 2px; outline: 1px
 .d-line.d-eq .d-g  { color: #45475a; }
 .d-line.d-eq .d-c  { color: #585b70; }
 
-/* ── Palabra diff ────────────────────────────────────────────────────────── */
+/* ── Diff de palabras ────────────────────────────────────────────────────── */
 mark.d-word-del { background: rgba(243,139,168,0.35); color: #f38ba8; border-radius: 2px; padding: 0 2px; }
 mark.d-word-ins { background: rgba(166,227,161,0.35); color: #a6e3a1; border-radius: 2px; padding: 0 2px; }
+
+/* ── Regex highlights — 5 color slots ───────────────────────────────────── */
+span.rx-0 { background: rgba(249,199,79,0.35);  border-radius: 2px; outline: 1px solid rgba(249,199,79,0.5); }
+span.rx-1 { background: rgba(80,200,220,0.35);  border-radius: 2px; outline: 1px solid rgba(80,200,220,0.5); }
+span.rx-2 { background: rgba(248,131,248,0.35); border-radius: 2px; outline: 1px solid rgba(248,131,248,0.5); }
+span.rx-3 { background: rgba(100,220,130,0.35); border-radius: 2px; outline: 1px solid rgba(100,220,130,0.5); }
+span.rx-4 { background: rgba(255,150,80,0.35);  border-radius: 2px; outline: 1px solid rgba(255,150,80,0.5); }
 
 .hidden { display: none !important; }

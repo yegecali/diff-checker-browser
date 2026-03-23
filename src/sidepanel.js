@@ -2,12 +2,12 @@ import { diffWords } from 'diff';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 const STORAGE_KEY_REGEX = 'hdc_regex_list';
-const RX_SLOTS = 5; // number of color slots (matches CSS rx-0…rx-4)
+const RX_SLOTS = 5;
 
 // ── State ─────────────────────────────────────────────────────────────────────
 let currentTabId = null;
 let lastDiff     = null; // { changes, sel1, sel2 }
-let regexList    = [];   // string[]
+let regexList    = [];   // string[] — loaded from storage, updated via onChanged
 
 // ── Init ──────────────────────────────────────────────────────────────────────
 async function init() {
@@ -35,21 +35,20 @@ async function init() {
     }
   });
 
-  const state = await queryState();
-  render(state ?? idleState());
+  // Regex list changed from the popup — re-apply highlights immediately
+  chrome.storage.onChanged.addListener((changes, area) => {
+    if (area === 'local' && changes[STORAGE_KEY_REGEX]) {
+      regexList = changes[STORAGE_KEY_REGEX].newValue ?? [];
+      reapplyHighlights();
+    }
+  });
 
-  // Buttons
   document.getElementById('copy-btn').addEventListener('click', handleCopy);
-  document.getElementById('regex-add-btn').addEventListener('click', handleRegexAdd);
-  document.getElementById('regex-input').addEventListener('keydown', e => {
-    if (e.key === 'Enter') handleRegexAdd();
-  });
-  document.getElementById('regex-chips').addEventListener('click', e => {
-    const btn = e.target.closest('.rx-chip-del');
-    if (btn) removeRegex(parseInt(btn.dataset.i));
-  });
 
   await loadRegexList();
+
+  const state = await queryState();
+  render(state ?? idleState());
 }
 
 function idleState() {
@@ -66,6 +65,61 @@ async function queryState() {
 async function getActiveTab() {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   return tab ?? null;
+}
+
+// ── Regex list (read-only here — popup owns writes) ───────────────────────────
+async function loadRegexList() {
+  const { [STORAGE_KEY_REGEX]: saved } = await chrome.storage.local.get(STORAGE_KEY_REGEX);
+  regexList = saved ?? [];
+}
+
+// ── Highlight engine ──────────────────────────────────────────────────────────
+function reapplyHighlights() {
+  const left  = document.getElementById('col-left');
+  const right = document.getElementById('col-right');
+  if (!left || !right) return;
+  applyRegexHighlights(left);
+  applyRegexHighlights(right);
+}
+
+function applyRegexHighlights(container) {
+  // Strip previous rx highlights (restore plain text nodes)
+  container.querySelectorAll('span.rx-hl').forEach(el => {
+    el.replaceWith(document.createTextNode(el.textContent));
+  });
+  container.normalize();
+
+  regexList.forEach((pattern, colorIdx) => {
+    let re;
+    try { re = new RegExp(pattern, 'gi'); } catch { return; }
+
+    // Collect text nodes first (walker invalidates mid-mutation)
+    const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT);
+    const nodes = [];
+    let n;
+    while ((n = walker.nextNode())) nodes.push(n);
+
+    nodes.forEach(textNode => {
+      const text = textNode.textContent;
+      const parts = [];
+      let last = 0;
+      re.lastIndex = 0;
+      let m;
+      while ((m = re.exec(text)) !== null) {
+        if (m[0].length === 0) { re.lastIndex++; continue; }
+        if (m.index > last) parts.push(document.createTextNode(text.slice(last, m.index)));
+        const span = document.createElement('span');
+        span.className = `rx-hl rx-${colorIdx % RX_SLOTS}`;
+        span.textContent = m[0];
+        parts.push(span);
+        last = m.index + m[0].length;
+      }
+      if (parts.length) {
+        if (last < text.length) parts.push(document.createTextNode(text.slice(last)));
+        textNode.replaceWith(...parts);
+      }
+    });
+  });
 }
 
 // ── Render ────────────────────────────────────────────────────────────────────
@@ -124,116 +178,6 @@ function buildUnifiedDiff(changes, sel1, sel2) {
     else              content.forEach(l => lines.push(` ${l}`));
   });
   return lines.join('\n');
-}
-
-// ── Regex finder ──────────────────────────────────────────────────────────────
-async function loadRegexList() {
-  const { [STORAGE_KEY_REGEX]: saved } = await chrome.storage.local.get(STORAGE_KEY_REGEX);
-  regexList = saved ?? [];
-  renderRegexChips();
-}
-
-function saveRegexList() {
-  chrome.storage.local.set({ [STORAGE_KEY_REGEX]: regexList });
-}
-
-function handleRegexAdd() {
-  const input = document.getElementById('regex-input');
-  const errEl = document.getElementById('regex-error');
-  const pattern = input.value.trim();
-
-  if (!pattern) return;
-
-  try { new RegExp(pattern); } catch {
-    errEl.textContent = 'Regex inválido';
-    errEl.classList.remove('hidden');
-    setTimeout(() => errEl.classList.add('hidden'), 2000);
-    return;
-  }
-
-  if (regexList.includes(pattern)) {
-    errEl.textContent = 'Ya existe ese patrón';
-    errEl.classList.remove('hidden');
-    setTimeout(() => errEl.classList.add('hidden'), 2000);
-    return;
-  }
-
-  errEl.classList.add('hidden');
-  regexList.push(pattern);
-  saveRegexList();
-  renderRegexChips();
-  reapplyHighlights();
-  input.value = '';
-  input.focus();
-}
-
-function removeRegex(idx) {
-  regexList.splice(idx, 1);
-  saveRegexList();
-  renderRegexChips();
-  reapplyHighlights();
-}
-
-function renderRegexChips() {
-  const container = document.getElementById('regex-chips');
-  if (!container) return;
-  container.innerHTML = regexList.map((pat, i) =>
-    `<span class="rx-chip rx-chip-${i % RX_SLOTS}">` +
-    `<span class="rx-chip-swatch"></span>` +
-    `<span class="rx-chip-text">${escHtml(pat)}</span>` +
-    `<button class="rx-chip-del" data-i="${i}" title="Eliminar">×</button>` +
-    `</span>`
-  ).join('');
-  container.classList.toggle('hidden', regexList.length === 0);
-}
-
-// ── Highlight engine ──────────────────────────────────────────────────────────
-function reapplyHighlights() {
-  const left  = document.getElementById('col-left');
-  const right = document.getElementById('col-right');
-  if (!left || !right) return;
-  applyRegexHighlights(left);
-  applyRegexHighlights(right);
-}
-
-function applyRegexHighlights(container) {
-  // Strip previous rx highlights (restore plain text nodes)
-  container.querySelectorAll('span.rx-hl').forEach(el => {
-    el.replaceWith(document.createTextNode(el.textContent));
-  });
-  container.normalize();
-
-  regexList.forEach((pattern, colorIdx) => {
-    let re;
-    try { re = new RegExp(pattern, 'gi'); } catch { return; }
-
-    // Collect text nodes first (TreeWalker invalidates if DOM changes mid-walk)
-    const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT);
-    const nodes = [];
-    let n;
-    while ((n = walker.nextNode())) nodes.push(n);
-
-    nodes.forEach(textNode => {
-      const text = textNode.textContent;
-      const parts = [];
-      let last = 0;
-      re.lastIndex = 0;
-      let m;
-      while ((m = re.exec(text)) !== null) {
-        if (m[0].length === 0) { re.lastIndex++; continue; }
-        if (m.index > last) parts.push(document.createTextNode(text.slice(last, m.index)));
-        const span = document.createElement('span');
-        span.className = `rx-hl rx-${colorIdx % RX_SLOTS}`;
-        span.textContent = m[0];
-        parts.push(span);
-        last = m.index + m[0].length;
-      }
-      if (parts.length) {
-        if (last < text.length) parts.push(document.createTextNode(text.slice(last)));
-        textNode.replaceWith(...parts);
-      }
-    });
-  });
 }
 
 // ── Diff rendering ────────────────────────────────────────────────────────────
@@ -300,13 +244,12 @@ function renderDiff(changes, el1, el2) {
 
   document.getElementById('no-changes').classList.toggle('hidden', !noChanges);
   document.getElementById('cols-wrap').classList.toggle('hidden',   noChanges);
-  document.getElementById('search-bar').classList.toggle('hidden',  noChanges);
   document.getElementById('copy-btn').classList.toggle('hidden',    noChanges);
 
   if (!noChanges) {
     document.getElementById('col-left').innerHTML  = buildColHTML(enriched, 'left');
     document.getElementById('col-right').innerHTML = buildColHTML(enriched, 'right');
-    reapplyHighlights(); // restore saved regex highlights on fresh render
+    reapplyHighlights(); // apply saved regex patterns on fresh render
   }
 }
 

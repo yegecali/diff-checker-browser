@@ -8,10 +8,7 @@ body {
   width: 320px;
 }
 
-#app {
-  display: flex;
-  flex-direction: column;
-}
+#app { display: flex; flex-direction: column; }
 
 /* ── Header ──────────────────────────────────────────────────────────────── */
 header {
@@ -22,30 +19,17 @@ header {
   border-bottom: 1px solid #313244;
   background: #181825;
 }
-
-h1 {
-  font-size: 13px;
-  font-weight: 700;
-  color: #cdd6f4;
-}
+h1 { font-size: 13px; font-weight: 700; color: #cdd6f4; }
 
 /* ── Status ──────────────────────────────────────────────────────────────── */
-.status {
-  padding: 7px 14px;
-  font-size: 12px;
-  border-bottom: 1px solid #313244;
-}
+.status { padding: 7px 14px; font-size: 12px; border-bottom: 1px solid #313244; }
 .status.idle    { background: #1e1e2e; color: #6c7086; }
 .status.picking { background: #1a2f55; color: #89b4fa; font-weight: 500; }
 .status.done    { background: #1a3028; color: #a6e3a1; font-weight: 500; }
 .status.error   { background: #3b1218; color: #f38ba8; }
 
 /* ── Slots ───────────────────────────────────────────────────────────────── */
-.slot {
-  padding: 9px 14px;
-  border-bottom: 1px solid #313244;
-  transition: background 0.15s;
-}
+.slot { padding: 9px 14px; border-bottom: 1px solid #313244; transition: background 0.15s; }
 .slot.active { background: #1c2b4a; }
 
 .slot-header {
@@ -54,7 +38,6 @@ h1 {
   align-items: center;
   margin-bottom: 6px;
 }
-
 .slot-label {
   font-weight: 600;
   font-size: 11px;
@@ -62,7 +45,6 @@ h1 {
   letter-spacing: 0.05em;
   color: #89b4fa;
 }
-
 .slot-badge {
   font-size: 10px;
   color: #6c7086;
@@ -74,11 +56,7 @@ h1 {
 }
 .slot-badge.selected { color: #a6e3a1; }
 
-.slot-controls {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
+.slot-controls { display: flex; align-items: center; gap: 5px; }
 
 .pick-btn {
   display: flex;
@@ -127,6 +105,116 @@ input[type="text"]::placeholder { color: #45475a; }
 }
 .use-btn:hover { background: #585b70; }
 
+/* ── Regex finder section ────────────────────────────────────────────────── */
+#rx-section {
+  padding: 8px 14px;
+  border-bottom: 1px solid #313244;
+}
+
+.rx-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 7px;
+}
+.rx-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #6c7086;
+}
+
+/* Chips */
+#rx-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 6px;
+}
+.rx-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border-radius: 4px;
+  padding: 2px 6px 2px 5px;
+  font-size: 11px;
+  font-family: 'Consolas', monospace;
+  border: 1px solid transparent;
+  max-width: 100%;
+}
+.rx-chip-swatch {
+  width: 7px; height: 7px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+.rx-chip-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 200px;
+}
+.rx-chip-del {
+  background: transparent;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  padding: 0 1px;
+  opacity: 0.55;
+  flex-shrink: 0;
+}
+.rx-chip-del:hover { opacity: 1; }
+
+/* 5 color slots — chip backgrounds */
+.rx-chip-0 { background: rgba(249,199,79,0.12);  border-color: rgba(249,199,79,0.35);  color: #f9c74f; }
+.rx-chip-1 { background: rgba(80,200,220,0.12);  border-color: rgba(80,200,220,0.35);  color: #50c8dc; }
+.rx-chip-2 { background: rgba(248,131,248,0.12); border-color: rgba(248,131,248,0.35); color: #f883f8; }
+.rx-chip-3 { background: rgba(100,220,130,0.12); border-color: rgba(100,220,130,0.35); color: #64dc82; }
+.rx-chip-4 { background: rgba(255,150,80,0.12);  border-color: rgba(255,150,80,0.35);  color: #ff9650; }
+
+.rx-chip-0 .rx-chip-swatch { background: #f9c74f; }
+.rx-chip-1 .rx-chip-swatch { background: #50c8dc; }
+.rx-chip-2 .rx-chip-swatch { background: #f883f8; }
+.rx-chip-3 .rx-chip-swatch { background: #64dc82; }
+.rx-chip-4 .rx-chip-swatch { background: #ff9650; }
+
+/* Input row */
+#rx-input-row { display: flex; align-items: center; gap: 5px; }
+
+/* Next-color dot indicator */
+.rx-dot {
+  width: 9px; height: 9px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  transition: background 0.2s;
+}
+.rx-dot-0 { background: #f9c74f; }
+.rx-dot-1 { background: #50c8dc; }
+.rx-dot-2 { background: #f883f8; }
+.rx-dot-3 { background: #64dc82; }
+.rx-dot-4 { background: #ff9650; }
+
+#rx-add-btn {
+  background: #313244;
+  border: 1px solid #45475a;
+  color: #cdd6f4;
+  border-radius: 4px;
+  padding: 3px 10px;
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1;
+  flex-shrink: 0;
+}
+#rx-add-btn:hover { background: #45475a; }
+
+#rx-error {
+  margin-top: 5px;
+  font-size: 11px;
+  color: #f38ba8;
+}
+
 /* ── Error ───────────────────────────────────────────────────────────────── */
 #error-box {
   padding: 6px 14px;
@@ -158,7 +246,6 @@ footer {
   background: #181825;
   min-height: 40px;
 }
-
 .btn-reset {
   background: #313244;
   border: 1px solid #45475a;

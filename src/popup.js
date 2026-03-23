@@ -1,4 +1,8 @@
 const STORAGE_KEY_SELECTORS = 'hdc_saved_selectors';
+const STORAGE_KEY_REGEX     = 'hdc_regex_list';
+const RX_SLOTS = 5;
+
+let regexList = [];
 
 // ── Init ──────────────────────────────────────────────────────────────────────
 async function init() {
@@ -10,8 +14,18 @@ async function init() {
   const state = await queryState();
   render(state ?? idleState());
 
-  // Pre-fill inputs with saved selectors for this page
   if (tab) await loadSavedSelectors(tab);
+  await loadRegexList();
+
+  // Regex section events
+  document.getElementById('rx-add-btn').addEventListener('click', handleRegexAdd);
+  document.getElementById('rx-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') handleRegexAdd();
+  });
+  document.getElementById('rx-chips').addEventListener('click', e => {
+    const btn = e.target.closest('.rx-chip-del');
+    if (btn) removeRegex(parseInt(btn.dataset.i));
+  });
 }
 
 function idleState() {
@@ -47,6 +61,81 @@ async function saveSelectors(url, sel1, sel2) {
   chrome.storage.local.set({ [STORAGE_KEY_SELECTORS]: updated });
 }
 
+// ── Regex list persistence ─────────────────────────────────────────────────────
+async function loadRegexList() {
+  const { [STORAGE_KEY_REGEX]: saved } = await chrome.storage.local.get(STORAGE_KEY_REGEX);
+  regexList = saved ?? [];
+  renderRegexChips();
+  updateNextDot();
+}
+
+function saveRegexList() {
+  chrome.storage.local.set({ [STORAGE_KEY_REGEX]: regexList });
+}
+
+function handleRegexAdd() {
+  const input = document.getElementById('rx-input');
+  const errEl = document.getElementById('rx-error');
+  const pattern = input.value.trim();
+
+  if (!pattern) return;
+
+  try { new RegExp(pattern); } catch {
+    showRxError('Regex inválido');
+    return;
+  }
+  if (regexList.includes(pattern)) {
+    showRxError('Ya existe ese patrón');
+    return;
+  }
+
+  errEl.classList.add('hidden');
+  regexList.push(pattern);
+  saveRegexList();
+  renderRegexChips();
+  updateNextDot();
+  input.value = '';
+  input.focus();
+}
+
+function removeRegex(idx) {
+  regexList.splice(idx, 1);
+  saveRegexList();
+  renderRegexChips();
+  updateNextDot();
+}
+
+function showRxError(msg) {
+  const errEl = document.getElementById('rx-error');
+  errEl.textContent = msg;
+  errEl.classList.remove('hidden');
+  setTimeout(() => errEl.classList.add('hidden'), 2000);
+}
+
+function renderRegexChips() {
+  const container = document.getElementById('rx-chips');
+  container.innerHTML = regexList.map((pat, i) =>
+    `<span class="rx-chip rx-chip-${i % RX_SLOTS}">` +
+    `<span class="rx-chip-swatch"></span>` +
+    `<span class="rx-chip-text">${escHtml(pat)}</span>` +
+    `<button class="rx-chip-del" data-i="${i}" title="Eliminar">×</button>` +
+    `</span>`
+  ).join('');
+  container.classList.toggle('hidden', regexList.length === 0);
+}
+
+function updateNextDot() {
+  const dot = document.getElementById('rx-next-dot');
+  const nextSlot = regexList.length % RX_SLOTS;
+  dot.className = `rx-dot rx-dot-${nextSlot}`;
+}
+
+function escHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
 // ── Render ────────────────────────────────────────────────────────────────────
 function render(state) {
   const { phase, element1, element2, error } = state;
@@ -80,7 +169,6 @@ function render(state) {
   document.getElementById('diff-hint').classList.toggle('hidden', phase !== 'SHOWING_DIFF');
   document.getElementById('reset-btn').classList.toggle('hidden', phase === 'IDLE');
 
-  // Persist selectors when diff is ready
   if (phase === 'SHOWING_DIFF' && element1?.selector && element2?.selector) {
     getActiveTab().then(tab => {
       if (tab?.url) saveSelectors(tab.url, element1.selector, element2.selector);

@@ -54,6 +54,21 @@
       </div>
     </section>
 
+    <!-- ── Resaltar en diff (regex finder) ────────────────────────── -->
+    <section id="rx-section">
+      <div class="rx-header">
+        <span class="rx-label">Resaltar en diff</span>
+      </div>
+      <div id="rx-chips" class="hidden"></div>
+      <div id="rx-input-row">
+        <span id="rx-next-dot" class="rx-dot rx-dot-0" title="Color del próximo patrón"></span>
+        <input type="text" id="rx-input" placeholder="Regex o texto… ej: error|warn"
+               autocomplete="off" spellcheck="false"/>
+        <button id="rx-add-btn" title="Añadir patrón (Enter)">+</button>
+      </div>
+      <div id="rx-error" class="hidden"></div>
+    </section>
+
     <!-- ── Error ───────────────────────────────────────────────────── -->
     <div id="error-box" class="hidden"></div>
 
