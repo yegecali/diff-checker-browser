@@ -1,11 +1,17 @@
+const STORAGE_KEY_SELECTORS = 'hdc_saved_selectors';
+
 // ── Init ──────────────────────────────────────────────────────────────────────
 async function init() {
   chrome.runtime.onMessage.addListener((msg) => {
     if (msg.type === 'STATE_UPDATE') render(msg.state);
   });
 
+  const tab   = await getActiveTab();
   const state = await queryState();
   render(state ?? idleState());
+
+  // Pre-fill inputs with saved selectors for this page
+  if (tab) await loadSavedSelectors(tab);
 }
 
 function idleState() {
@@ -17,6 +23,28 @@ async function queryState() {
   if (!tab) return null;
   try { return await chrome.tabs.sendMessage(tab.id, { type: 'GET_STATE' }); }
   catch { return null; }
+}
+
+// ── Selector persistence ───────────────────────────────────────────────────────
+function urlKey(url) {
+  try { const u = new URL(url); return u.origin + u.pathname; }
+  catch { return url; }
+}
+
+async function loadSavedSelectors(tab) {
+  if (!tab?.url) return;
+  const { [STORAGE_KEY_SELECTORS]: all } = await chrome.storage.local.get(STORAGE_KEY_SELECTORS);
+  const saved = all?.[urlKey(tab.url)];
+  if (!saved) return;
+  if (saved.sel1) document.getElementById('selector1').value = saved.sel1;
+  if (saved.sel2) document.getElementById('selector2').value = saved.sel2;
+}
+
+async function saveSelectors(url, sel1, sel2) {
+  if (!url || !sel1 || !sel2) return;
+  const { [STORAGE_KEY_SELECTORS]: all } = await chrome.storage.local.get(STORAGE_KEY_SELECTORS);
+  const updated = { ...(all ?? {}), [urlKey(url)]: { sel1, sel2 } };
+  chrome.storage.local.set({ [STORAGE_KEY_SELECTORS]: updated });
 }
 
 // ── Render ────────────────────────────────────────────────────────────────────
@@ -49,9 +77,15 @@ function render(state) {
   if (error) { errBox.textContent = error; errBox.classList.remove('hidden'); }
   else        { errBox.classList.add('hidden'); }
 
-  // Cuando hay diff: mostrar aviso con flecha al side panel
   document.getElementById('diff-hint').classList.toggle('hidden', phase !== 'SHOWING_DIFF');
   document.getElementById('reset-btn').classList.toggle('hidden', phase === 'IDLE');
+
+  // Persist selectors when diff is ready
+  if (phase === 'SHOWING_DIFF' && element1?.selector && element2?.selector) {
+    getActiveTab().then(tab => {
+      if (tab?.url) saveSelectors(tab.url, element1.selector, element2.selector);
+    });
+  }
 }
 
 function setStatus(text, cls) {
@@ -73,8 +107,6 @@ async function send(msg) {
   try {
     await chrome.tabs.sendMessage(tab.id, msg);
   } catch {
-    // Content script not yet in this tab (opened before extension loaded).
-    // Inject it on the fly and retry once.
     const ok = await tryInject(tab);
     if (ok) {
       try { await chrome.tabs.sendMessage(tab.id, msg); return; } catch { /* fall through */ }
