@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <link rel="stylesheet" href="sidepanel.css">
+  <title>HTML Diff Checker</title>
+</head>
+<body>
+  <div id="app">
+
+    <!-- ── Header ─────────────────────────────────────────────────── -->
+    <header>
+      <img src="../icons/icon48.png" width="16" height="16" alt="">
+      <h1>Diff Result</h1>
+    </header>
+
+    <!-- ── Placeholder (sin diff aún) ────────────────────────────── -->
+    <div id="placeholder">
+      <svg width="32" height="32" viewBox="0 0 16 16" fill="#45475a">
+        <path d="M5.5 7a.5.5 0 0 0 0 1h5a.5.5 0 0 0 0-1h-5zM5 9.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5zm0 2a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 0 1h-2a.5.5 0 0 1-.5-.5z"/>
+        <path d="M9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V4.5L9.5 0zm0 1v2A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h5.5z"/>
+      </svg>
+      <p id="placeholder-msg">Selecciona dos elementos con el formulario de la extensión.</p>
+    </div>
+
+    <!-- ── Resultado diff ─────────────────────────────────────────── -->
+    <div id="result" class="hidden">
+
+      <div id="diff-header">
+        <span id="stats"></span>
+        <div id="selectors">
+          <div class="d-sel d-sel-1"><span class="d-sel-dot"></span><code id="sel1"></code></div>
+          <div class="d-sel d-sel-2"><span class="d-sel-dot"></span><code id="sel2"></code></div>
+        </div>
+      </div>
+
+      <!-- Sin cambios -->
+      <div id="no-changes" class="hidden">
+        <svg width="28" height="28" viewBox="0 0 16 16" fill="#a6e3a1">
+          <path d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0z"/>
+        </svg>
+        <p>Los elementos son idénticos</p>
+      </div>
+
+      <!-- Columnas diff — único scroll -->
+      <div id="cols-wrap" class="hidden">
+        <div id="col-headers">
+          <div class="d-col-hdr d-col-hdr-1">Elemento 1</div>
+          <div class="d-col-sep"></div>
+          <div class="d-col-hdr d-col-hdr-2">Elemento 2</div>
+        </div>
+        <div id="diff-cols">
+          <div id="col-left"  class="d-col"></div>
+          <div class="d-col-divider"></div>
+          <div id="col-right" class="d-col"></div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+  <script src="../sidepanel.js"></script>
+</body>
+</html>

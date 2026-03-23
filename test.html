@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Diff Checker — Ejemplo de Prueba</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #0f0f1a;
+      color: #cdd6f4;
+      margin: 0;
+      padding: 40px 24px;
+    }
+
+    h1 {
+      text-align: center;
+      font-size: 22px;
+      color: #89b4fa;
+      margin-bottom: 6px;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: #6c7086;
+      font-size: 13px;
+      margin-bottom: 40px;
+    }
+
+    .tip {
+      background: #1c2f55;
+      border: 1px solid #45475a;
+      border-left: 4px solid #89b4fa;
+      border-radius: 6px;
+      padding: 12px 16px;
+      font-size: 13px;
+      color: #89b4fa;
+      margin-bottom: 32px;
+      max-width: 900px;
+      margin-inline: auto;
+    }
+
+    .tip strong { color: #cdd6f4; }
+
+    .env-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 28px;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .env-card {
+      border-radius: 10px;
+      border: 1px solid #313244;
+      overflow: hidden;
+    }
+
+    .env-card--qa    { border-color: #f9e2af; }
+    .env-card--prod  { border-color: #f38ba8; }
+
+    .env-header {
+      padding: 14px 20px;
+      font-weight: 700;
+      font-size: 14px;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .env-card--qa   .env-header { background: #2d2a14; color: #f9e2af; }
+    .env-card--prod .env-header { background: #2d1420; color: #f38ba8; }
+
+    .env-badge {
+      font-size: 10px;
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+    }
+
+    .env-card--qa   .env-badge { background: #f9e2af22; border: 1px solid #f9e2af55; color: #f9e2af; }
+    .env-card--prod .env-badge { background: #f38ba822; border: 1px solid #f38ba855; color: #f38ba8; }
+
+    /* ── LOS 2 ELEMENTOS A COMPARAR ── */
+    .deployment-steps {
+      background: #1e1e2e;
+      padding: 20px;
+    }
+
+    .step {
+      display: flex;
+      gap: 14px;
+      margin-bottom: 22px;
+      position: relative;
+    }
+
+    .step:not(:last-child)::after {
+      content: '';
+      position: absolute;
+      left: 17px;
+      top: 36px;
+      bottom: -10px;
+      width: 2px;
+      background: #313244;
+    }
+
+    .step-num {
+      flex-shrink: 0;
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 700;
+      z-index: 1;
+    }
+
+    .env-card--qa   .step-num { background: #2d2a14; color: #f9e2af; border: 2px solid #f9e2af55; }
+    .env-card--prod .step-num { background: #2d1420; color: #f38ba8; border: 2px solid #f38ba855; }
+
+    .step-body { flex: 1; padding-top: 4px; }
+
+    .step-title {
+      font-weight: 600;
+      font-size: 13px;
+      color: #cdd6f4;
+      margin-bottom: 6px;
+    }
+
+    .step-detail {
+      font-size: 12px;
+      color: #6c7086;
+      line-height: 1.7;
+    }
+
+    .code-block {
+      background: #181825;
+      border: 1px solid #313244;
+      border-radius: 6px;
+      padding: 10px 13px;
+      font-family: 'Consolas', 'Menlo', monospace;
+      font-size: 11.5px;
+      color: #a6adc8;
+      margin-top: 8px;
+      line-height: 1.8;
+      white-space: pre;
+      overflow-x: auto;
+    }
+
+    .hl-blue   { color: #89b4fa; }
+    .hl-green  { color: #a6e3a1; }
+    .hl-yellow { color: #f9e2af; }
+    .hl-pink   { color: #f38ba8; }
+    .hl-purple { color: #cba6f7; }
+    .hl-teal   { color: #94e2d5; }
+  </style>
+</head>
+<body>
+
+  <h1>HTML Diff Checker — Página de Prueba</h1>
+  <p class="subtitle">Usa la extensión para comparar los pasos de despliegue entre QA y Producción</p>
+
+  <div class="tip">
+    <strong>Cómo usar:</strong> Abre la extensión → click en "Pick element" del Slot 1 → selecciona el recuadro <strong style="color:#f9e2af">QA</strong> →
+    luego "Pick element" del Slot 2 → selecciona el recuadro <strong style="color:#f38ba8">PRODUCCIÓN</strong>.
+    También puedes usar los selectores <code style="color:#89b4fa">#env-qa</code> y <code style="color:#89b4fa">#env-prod</code>.
+  </div>
+
+  <div class="env-grid">
+
+    <!-- ═══════════════════════════════════════════════════
+         ELEMENTO 1 — QA
+    ═══════════════════════════════════════════════════ -->
+    <div class="env-card env-card--qa" id="env-qa">
+      <div class="env-header">
+        <span>Quality Assurance</span>
+        <span class="env-badge">QA</span>
+      </div>
+
+      <div class="deployment-steps">
+
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <div class="step-title">Ejecutar Pipeline de CI/CD</div>
+            <div class="step-detail">Ingresar al pipeline de integración continua en Azure DevOps y disparar el build de la rama <strong>develop</strong>.</div>
+            <div class="code-block"><span class="hl-blue">Organización :</span> contoso-dev
+<span class="hl-blue">Proyecto     :</span> MiApp-QA
+<span class="hl-blue">Pipeline     :</span> deploy-qa
+<span class="hl-blue">Rama         :</span> develop
+<span class="hl-blue">Acción       :</span> Run pipeline → confirmar con <span class="hl-green">"Run"</span></div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <div class="step-title">Validar ejecución del pipeline</div>
+            <div class="step-detail">Esperar que todas las etapas del pipeline finalicen con estado <strong>Succeeded</strong>. Revisar logs si alguna etapa falla.</div>
+            <div class="code-block"><span class="hl-green">✓</span> Stage: Build          → Succeeded
+<span class="hl-green">✓</span> Stage: Unit Tests     → Succeeded
+<span class="hl-green">✓</span> Stage: Docker Build   → Succeeded
+<span class="hl-green">✓</span> Stage: Push to ACR    → Succeeded
+<span class="hl-green">✓</span> Stage: Deploy to QA   → Succeeded</div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <div class="step-title">Ingresar al Portal de Azure — Recurso QA</div>
+            <div class="step-detail">Navegar al portal de Azure y ubicar el grupo de recursos correspondiente al ambiente de QA.</div>
+            <div class="code-block"><span class="hl-blue">Suscripción      :</span> Azure Dev/Test
+<span class="hl-blue">Resource Group   :</span> rg-miapp-qa-eastus
+<span class="hl-blue">AKS Cluster      :</span> aks-miapp-qa-001
+<span class="hl-blue">Región           :</span> East US
+<span class="hl-blue">URL Portal       :</span> portal.azure.com → Kubernetes services</div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <div class="step-title">Ingresar al AKS — Validar Pods desplegados</div>
+            <div class="step-detail">Conectarse al clúster AKS de QA mediante kubectl y validar que los pods del namespace <code>qa</code> estén en estado <strong>Running</strong>.</div>
+            <div class="code-block"><span class="hl-yellow"># Conectar al cluster</span>
+az aks get-credentials \
+  --resource-group <span class="hl-green">rg-miapp-qa-eastus</span> \
+  --name <span class="hl-green">aks-miapp-qa-001</span>
+
+<span class="hl-yellow"># Validar pods en namespace qa</span>
+kubectl get pods -n <span class="hl-green">qa</span> -o wide
+
+<span class="hl-yellow"># Resultado esperado</span>
+<span class="hl-teal">NAME                          READY   STATUS    RESTARTS</span>
+miapp-api-7d4f9b-xk2lp        1/1     <span class="hl-green">Running</span>   0
+miapp-worker-6c8d2a-p9mnq     1/1     <span class="hl-green">Running</span>   0
+miapp-scheduler-3b1e7f-r4wzj  1/1     <span class="hl-green">Running</span>   0</div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-num">5</div>
+          <div class="step-body">
+            <div class="step-title">Ingresar a la Base de Datos — QA</div>
+            <div class="step-detail">Conectarse al servidor de base de datos de QA y ejecutar una consulta de validación para confirmar que el esquema y los datos de prueba están correctos.</div>
+            <div class="code-block"><span class="hl-blue">Servidor  :</span> sql-miapp-qa.database.windows.net
+<span class="hl-blue">Base datos:</span> db-miapp-qa
+<span class="hl-blue">Usuario   :</span> sqladmin-qa
+<span class="hl-blue">Puerto    :</span> 1433
+
+<span class="hl-yellow">-- Query de validación</span>
+<span class="hl-purple">SELECT TOP 10</span>
+    d.DeploymentId,
+    d.Version,
+    d.Environment,
+    d.DeployedAt,
+    d.Status
+<span class="hl-purple">FROM</span> dbo.Deployments d
+<span class="hl-purple">WHERE</span> d.Environment = <span class="hl-green">'QA'</span>
+  <span class="hl-purple">AND</span> d.DeployedAt >= <span class="hl-green">GETDATE() - 1</span>
+<span class="hl-purple">ORDER BY</span> d.DeployedAt <span class="hl-purple">DESC</span>;
+
+<span class="hl-yellow">-- Resultado esperado</span>
+<span class="hl-teal">DeploymentId  Version   Environment  Status</span>
+1042          v2.3.1    QA           <span class="hl-green">Success</span>
+1041          v2.3.0    QA           <span class="hl-green">Success</span></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════
+         ELEMENTO 2 — PRODUCCIÓN
+    ═══════════════════════════════════════════════════ -->
+    <div class="env-card env-card--prod" id="env-prod">
+      <div class="env-header">
+        <span>Producción</span>
+        <span class="env-badge">PROD</span>
+      </div>
+
+      <div class="deployment-steps">
+
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <div class="step-title">Ejecutar Pipeline de CI/CD</div>
+            <div class="step-detail">Ingresar al pipeline de entrega continua en Azure DevOps y disparar el release de la rama <strong>main</strong> con aprobación manual requerida.</div>
+            <div class="code-block"><span class="hl-blue">Organización :</span> contoso-prod
+<span class="hl-blue">Proyecto     :</span> MiApp-PROD
+<span class="hl-blue">Pipeline     :</span> deploy-production
+<span class="hl-blue">Rama         :</span> main
+<span class="hl-blue">Acción       :</span> Run pipeline → <span class="hl-pink">requiere aprobación de Release Manager</span></div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <div class="step-title">Validar ejecución del pipeline</div>
+            <div class="step-detail">Esperar aprobación manual en la etapa de Gate y que todas las etapas finalicen con estado <strong>Succeeded</strong>. Monitorear rollback automático si falla.</div>
+            <div class="code-block"><span class="hl-yellow">⏳</span> Stage: Build             → Succeeded
+<span class="hl-yellow">⏳</span> Stage: Integration Tests  → Succeeded
+<span class="hl-yellow">⏳</span> Stage: Docker Build       → Succeeded
+<span class="hl-yellow">⏳</span> Stage: Push to ACR        → Succeeded
+<span class="hl-pink">⏸</span> Stage: <span class="hl-pink">Approval Gate</span>       → Waiting approval...
+<span class="hl-green">✓</span> Stage: Deploy to PROD     → Succeeded</div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <div class="step-title">Ingresar al Portal de Azure — Recurso PROD</div>
+            <div class="step-detail">Navegar al portal de Azure y ubicar el grupo de recursos del ambiente de Producción con acceso restringido y MFA requerido.</div>
+            <div class="code-block"><span class="hl-blue">Suscripción      :</span> Azure Production (MFA requerido)
+<span class="hl-blue">Resource Group   :</span> rg-miapp-prod-westus2
+<span class="hl-blue">AKS Cluster      :</span> aks-miapp-prod-001
+<span class="hl-blue">Región           :</span> West US 2
+<span class="hl-blue">URL Portal       :</span> portal.azure.com → Kubernetes services</div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <div class="step-title">Ingresar al AKS — Validar Pods desplegados</div>
+            <div class="step-detail">Conectarse al clúster AKS de Producción mediante kubectl y validar que los pods del namespace <code>prod</code> estén en estado <strong>Running</strong> sin reinicios.</div>
+            <div class="code-block"><span class="hl-yellow"># Conectar al cluster</span>
+az aks get-credentials \
+  --resource-group <span class="hl-pink">rg-miapp-prod-westus2</span> \
+  --name <span class="hl-pink">aks-miapp-prod-001</span>
+
+<span class="hl-yellow"># Validar pods en namespace prod</span>
+kubectl get pods -n <span class="hl-pink">prod</span> -o wide
+
+<span class="hl-yellow"># Resultado esperado (3 réplicas por servicio)</span>
+<span class="hl-teal">NAME                          READY   STATUS    RESTARTS</span>
+miapp-api-9f2c4d-ab3kx        1/1     <span class="hl-green">Running</span>   0
+miapp-api-9f2c4d-mn7qz        1/1     <span class="hl-green">Running</span>   0
+miapp-api-9f2c4d-wx1pv        1/1     <span class="hl-green">Running</span>   0
+miapp-worker-5a7e1b-cr4nt     1/1     <span class="hl-green">Running</span>   0
+miapp-worker-5a7e1b-jk8ys     1/1     <span class="hl-green">Running</span>   0
+miapp-scheduler-8d3f6c-lp2mw  1/1     <span class="hl-green">Running</span>   0</div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-num">5</div>
+          <div class="step-body">
+            <div class="step-title">Ingresar a la Base de Datos — PROD</div>
+            <div class="step-detail">Conectarse al servidor de base de datos de Producción (conexión a través de Private Endpoint) y ejecutar una consulta de validación post-deploy.</div>
+            <div class="code-block"><span class="hl-blue">Servidor  :</span> sql-miapp-prod.database.windows.net
+<span class="hl-blue">Base datos:</span> db-miapp-prod
+<span class="hl-blue">Usuario   :</span> sqladmin-prod (via Key Vault)
+<span class="hl-blue">Puerto    :</span> 1433 (Private Endpoint)
+
+<span class="hl-yellow">-- Query de validación</span>
+<span class="hl-purple">SELECT TOP 10</span>
+    d.DeploymentId,
+    d.Version,
+    d.Environment,
+    d.DeployedAt,
+    d.Status
+<span class="hl-purple">FROM</span> dbo.Deployments d
+<span class="hl-purple">WHERE</span> d.Environment = <span class="hl-pink">'PROD'</span>
+  <span class="hl-purple">AND</span> d.DeployedAt >= <span class="hl-green">GETDATE() - 1</span>
+<span class="hl-purple">ORDER BY</span> d.DeployedAt <span class="hl-purple">DESC</span>;
+
+<span class="hl-yellow">-- Resultado esperado</span>
+<span class="hl-teal">DeploymentId  Version   Environment  Status</span>
+5187          v2.3.1    PROD         <span class="hl-green">Success</span>
+5186          v2.2.9    PROD         <span class="hl-green">Success</span></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+</body>
+</html>

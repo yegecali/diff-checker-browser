@@ -1,0 +1,61 @@
+name: Release Extension
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build extension
+        run: npm run build
+
+      - name: Read version from tag
+        id: version
+        run: echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+      - name: Create zip
+        run: |
+          cd dist
+          zip -r ../html-diff-checker-${{ steps.version.outputs.tag }}.zip .
+          cd ..
+          echo "Zip contents:"
+          unzip -l html-diff-checker-${{ steps.version.outputs.tag }}.zip
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          name: HTML Diff Checker ${{ steps.version.outputs.tag }}
+          body: |
+            ## HTML Diff Checker ${{ steps.version.outputs.tag }}
+
+            ### Instalación
+            1. Descarga el archivo `html-diff-checker-${{ steps.version.outputs.tag }}.zip`
+            2. Extrae el contenido en una carpeta
+            3. Abre Chrome/Edge → `chrome://extensions`
+            4. Activa **Developer mode**
+            5. Click en **Load unpacked** → selecciona la carpeta extraída
+
+            ### Cambios
+            Ver commits desde el tag anterior.
+          files: html-diff-checker-${{ steps.version.outputs.tag }}.zip
+          draft: false
+          prerelease: ${{ contains(steps.version.outputs.tag, '-') }}

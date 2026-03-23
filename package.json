@@ -1,0 +1,15 @@
+{
+  "name": "diff-checker-browser",
+  "version": "1.0.0",
+  "description": "Browser extension to compare two HTML elements on any page",
+  "scripts": {
+    "build": "vite build && vite build --config vite.content.config.js",
+    "dev": "vite build --watch & vite build --config vite.content.config.js --watch"
+  },
+  "devDependencies": {
+    "vite": "^5.4.0"
+  },
+  "dependencies": {
+    "diff": "^7.0.0"
+  }
+}

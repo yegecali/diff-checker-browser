@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <link rel="stylesheet" href="popup.css">
+  <title>HTML Diff Checker</title>
+</head>
+<body>
+  <div id="app">
+
+    <!-- ── Header ─────────────────────────────────────────────────── -->
+    <header>
+      <img src="../icons/icon48.png" width="16" height="16" alt="">
+      <h1>HTML Diff Checker</h1>
+    </header>
+
+    <!-- ── Status ─────────────────────────────────────────────────── -->
+    <div id="status-bar" class="status idle">Selecciona dos elementos para comparar</div>
+
+    <!-- ── Selectores ─────────────────────────────────────────────── -->
+    <section class="slot" id="slot1">
+      <div class="slot-header">
+        <span class="slot-label">Elemento 1</span>
+        <span class="slot-badge" id="badge1">no seleccionado</span>
+      </div>
+      <div class="slot-controls">
+        <button class="pick-btn" id="pick1">
+          <svg width="11" height="11" viewBox="0 0 16 16" fill="currentColor">
+            <path d="M14.778.085A.5.5 0 0 1 15 .5V8a.5.5 0 0 1-.314.464L14.5 8l.186.464-.003.001-.006.003-.023.009a12.435 12.435 0 0 1-.397.15c-.264.095-.631.223-1.047.35-.816.252-1.879.523-2.71.523-.847 0-1.548-.28-2.158-.525l-.028-.01C7.68 8.71 7.14 8.5 6.5 8.5c-.7 0-1.638.23-2.437.477A19.626 19.626 0 0 0 3 9.342V15.5a.5.5 0 0 1-1 0V.5a.5.5 0 0 1 1 0v.282c.226-.079.496-.17.79-.26C4.606.272 5.67 0 6.5 0c.84 0 1.524.277 2.121.519l.043.018C9.286.788 9.828 1 10.5 1c.7 0 1.638-.23 2.437-.477a19.587 19.587 0 0 0 1.349-.476l.019-.007.004-.002h.001"/>
+          </svg>
+          Seleccionar
+        </button>
+        <span class="sep">o</span>
+        <input type="text" id="selector1" placeholder="#id  .clase  etiqueta" autocomplete="off" spellcheck="false"/>
+        <button class="use-btn" id="use1">Usar</button>
+      </div>
+    </section>
+
+    <section class="slot" id="slot2">
+      <div class="slot-header">
+        <span class="slot-label">Elemento 2</span>
+        <span class="slot-badge" id="badge2">no seleccionado</span>
+      </div>
+      <div class="slot-controls">
+        <button class="pick-btn" id="pick2">
+          <svg width="11" height="11" viewBox="0 0 16 16" fill="currentColor">
+            <path d="M14.778.085A.5.5 0 0 1 15 .5V8a.5.5 0 0 1-.314.464L14.5 8l.186.464-.003.001-.006.003-.023.009a12.435 12.435 0 0 1-.397.15c-.264.095-.631.223-1.047.35-.816.252-1.879.523-2.71.523-.847 0-1.548-.28-2.158-.525l-.028-.01C7.68 8.71 7.14 8.5 6.5 8.5c-.7 0-1.638.23-2.437.477A19.626 19.626 0 0 0 3 9.342V15.5a.5.5 0 0 1-1 0V.5a.5.5 0 0 1 1 0v.282c.226-.079.496-.17.79-.26C4.606.272 5.67 0 6.5 0c.84 0 1.524.277 2.121.519l.043.018C9.286.788 9.828 1 10.5 1c.7 0 1.638-.23 2.437-.477a19.587 19.587 0 0 0 1.349-.476l.019-.007.004-.002h.001"/>
+          </svg>
+          Seleccionar
+        </button>
+        <span class="sep">o</span>
+        <input type="text" id="selector2" placeholder="#id  .clase  etiqueta" autocomplete="off" spellcheck="false"/>
+        <button class="use-btn" id="use2">Usar</button>
+      </div>
+    </section>
+
+    <!-- ── Error ───────────────────────────────────────────────────── -->
+    <div id="error-box" class="hidden"></div>
+
+    <!-- ── Diff listo: aviso al panel lateral ─────────────────────── -->
+    <div id="diff-hint" class="hidden">
+      <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor">
+        <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+        <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
+      </svg>
+      Diff listo — revisa el panel lateral
+    </div>
+
+    <!-- ── Footer ─────────────────────────────────────────────────── -->
+    <footer>
+      <button id="reset-btn" class="btn-reset hidden">Resetear</button>
+    </footer>
+
+  </div>
+  <script src="../popup.js"></script>
+</body>
+</html>
