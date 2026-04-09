@@ -3,6 +3,8 @@
   "name": "HTML Diff Checker",
   "version": "1.0.0",
   "description": "Select two HTML elements on any page and compare their differences.",
+  "author": "yegecali",
+  "homepage_url": "https://github.com/yegecali/diff-checker-browser",
   "icons": {
     "16": "icons/icon16.png",
     "48": "icons/icon48.png",
@@ -13,7 +15,8 @@
     "default_icon": {
       "16": "icons/icon16.png",
       "48": "icons/icon48.png"
-    }
+    },
+    "default_title": "HTML Diff Checker - Compare elements"
   },
   "background": {
     "service_worker": "background.js",
@@ -36,5 +39,28 @@
       "css": ["content.css"],
       "run_at": "document_idle"
     }
-  ]
+  ],
+  "commands": {
+    "_execute_action": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+D",
+        "mac": "Command+Shift+D"
+      },
+      "description": "Open HTML Diff Checker popup"
+    },
+    "start_element_1": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+1",
+        "mac": "Command+Shift+1"
+      },
+      "description": "Start selecting Element 1"
+    },
+    "start_element_2": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+2",
+        "mac": "Command+Shift+2"
+      },
+      "description": "Start selecting Element 2"
+    }
+  }
 }
