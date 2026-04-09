@@ -1,4 +1,20 @@
+// ── Browser capability detection ──────────────────────────────────────────
+// chrome.sidePanel is only available in Chrome / Edge (MV3 sidePanel API).
+// Firefox exposes the sidebar via browser.sidebarAction instead.
+// globalThis.browser is the Firefox-specific namespace (Promise-based API).
+const hasSidebarAction =
+  typeof globalThis.browser !== 'undefined' && !!globalThis.browser.sidebarAction;
+
+// Wire up the "Open panel" button shown in Firefox when sidePanel is absent.
+const openSidebarBtn = document.getElementById('open-sidebar-btn');
+if (hasSidebarAction && openSidebarBtn) {
+  openSidebarBtn.addEventListener('click', () => {
+    globalThis.browser.sidebarAction.open().catch(() => {});
+  });
+}
+
 const STORAGE_KEY_SELECTORS = 'hdc_saved_selectors';
+
 const STORAGE_KEY_REGEX = 'hdc_regex_list';
 const RX_SLOTS = 5;
 
@@ -186,6 +202,19 @@ function render(state) {
   }
 
   document.getElementById('diff-hint').classList.toggle('hidden', phase !== 'SHOWING_DIFF');
+
+  // Adjust hint text and sidebar button visibility based on browser capability.
+  if (phase === 'SHOWING_DIFF') {
+    if (hasSidebarAction) {
+      document.getElementById('diff-hint-text').textContent = 'Diff listo — abre el panel lateral';
+      document.getElementById('open-sidebar-btn').classList.remove('hidden');
+    } else {
+      document.getElementById('diff-hint-text').textContent =
+        'Diff listo — revisa el panel lateral';
+      document.getElementById('open-sidebar-btn').classList.add('hidden');
+    }
+  }
+
   document.getElementById('reset-btn').classList.toggle('hidden', phase === 'IDLE');
 
   if (phase === 'SHOWING_DIFF' && element1?.selector && element2?.selector) {
