@@ -39,14 +39,14 @@ let clickReady = false; // evita capturar el primer click de transferencia de fo
 
 function startPickMode(slot) {
   state.phase = slot === 1 ? 'SELECTING_1' : 'SELECTING_2';
-  state.error  = null;
-  clickReady   = false;
+  state.error = null;
+  clickReady = false;
 
   showPickBanner(slot);
 
   document.addEventListener('mouseover', onMouseOver, true);
-  document.addEventListener('mouseout',  onMouseOut,  true);
-  document.addEventListener('keydown',   onKeyDown,   true);
+  document.addEventListener('mouseout', onMouseOut, true);
+  document.addEventListener('keydown', onKeyDown, true);
 
   // Delay de 400 ms antes de capturar clicks — le da tiempo al usuario de
   // mover el ratón desde el side panel a la página sin seleccionar por accidente
@@ -93,10 +93,13 @@ function onKeyDown(e) {
 function exitPickMode() {
   clickReady = false;
   document.removeEventListener('mouseover', onMouseOver, true);
-  document.removeEventListener('mouseout',  onMouseOut,  true);
-  document.removeEventListener('click',     onClick,     true);
-  document.removeEventListener('keydown',   onKeyDown,   true);
-  if (hoveredEl) { hoveredEl.classList.remove('hdc-hover'); hoveredEl = null; }
+  document.removeEventListener('mouseout', onMouseOut, true);
+  document.removeEventListener('click', onClick, true);
+  document.removeEventListener('keydown', onKeyDown, true);
+  if (hoveredEl) {
+    hoveredEl.classList.remove('hdc-hover');
+    hoveredEl = null;
+  }
   removePickBanner();
 }
 
@@ -105,18 +108,23 @@ function showPickBanner(slot) {
   removePickBanner();
   const banner = document.createElement('div');
   banner.id = 'hdc-pick-banner';
+  banner.setAttribute('role', 'alert');
+  banner.setAttribute('aria-live', 'polite');
   banner.innerHTML =
     `<span class="hdc-pick-dot"></span>` +
     `<span>Selecciona el <strong>Elemento ${slot}</strong> — haz click en cualquier elemento de la página</span>` +
-    `<button id="hdc-pick-cancel">✕ Cancelar (Esc)</button>`;
+    `<button id="hdc-pick-cancel" aria-label="Cancelar selección">✕ Cancelar (Esc)</button>`;
   document.body.appendChild(banner);
   requestAnimationFrame(() => banner.classList.add('hdc-pick-banner-visible'));
-  document.getElementById('hdc-pick-cancel').addEventListener('click', (e) => {
-    e.stopPropagation();
-    exitPickMode();
-    state.phase = state.element1 ? 'SELECTING_2' : 'IDLE';
-    broadcastState();
-  });
+  const cancelBtn = document.getElementById('hdc-pick-cancel');
+  if (cancelBtn) {
+    cancelBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      exitPickMode();
+      state.phase = state.element1 ? 'SELECTING_2' : 'IDLE';
+      broadcastState();
+    });
+  }
 }
 
 function removePickBanner() {
@@ -133,9 +141,17 @@ function handleSelectorSubmit(slot, value) {
   if (!trimmed) return;
 
   let el = null;
-  try { el = document.querySelector(trimmed); } catch (_) {}
+  try {
+    el = document.querySelector(trimmed);
+  } catch (_) {
+    // Invalid selector - will try getElementById fallback
+  }
   if (!el) {
-    try { el = document.getElementById(trimmed.replace(/^#/, '')); } catch (_) {}
+    try {
+      el = document.getElementById(trimmed.replace(/^#/, ''));
+    } catch (_) {
+      // Invalid ID - element not found
+    }
   }
 
   if (!el) {
@@ -169,10 +185,7 @@ function captureElement(slot, el) {
 
 // ── Diff ──────────────────────────────────────────────────────────────────────
 function runDiff() {
-  state.diff = diffLines(
-    normalizeText(state.element1.text),
-    normalizeText(state.element2.text),
-  );
+  state.diff = diffLines(normalizeText(state.element1.text), normalizeText(state.element2.text));
 }
 
 function extractText(el) {
@@ -180,12 +193,14 @@ function extractText(el) {
 }
 
 function normalizeText(text) {
-  return text
-    .split('\n')
-    .map(l => l.trimEnd())
-    .join('\n')
-    .replace(/\n{3,}/g, '\n\n')
-    .trim() + '\n';
+  return (
+    text
+      .split('\n')
+      .map(l => l.trimEnd())
+      .join('\n')
+      .replace(/\n{3,}/g, '\n\n')
+      .trim() + '\n'
+  );
 }
 
 // ── Toast ─────────────────────────────────────────────────────────────────────
@@ -196,6 +211,8 @@ function showToast(message, type = 'info') {
   if (!toast) {
     toast = document.createElement('div');
     toast.id = 'hdc-toast';
+    toast.setAttribute('role', 'status');
+    toast.setAttribute('aria-live', 'polite');
     document.body.appendChild(toast);
   }
   toast.textContent = message;
@@ -220,7 +237,10 @@ function generateSelector(el) {
   const parts = [];
   let cur = el;
   while (cur && cur !== document.body) {
-    if (cur.id) { parts.unshift('#' + CSS.escape(cur.id)); break; }
+    if (cur.id) {
+      parts.unshift('#' + CSS.escape(cur.id));
+      break;
+    }
     let part = cur.tagName.toLowerCase();
     const siblings = cur.parentElement
       ? Array.from(cur.parentElement.children).filter(c => c.tagName === cur.tagName)
@@ -234,11 +254,11 @@ function generateSelector(el) {
 
 function serializeState() {
   return {
-    phase:    state.phase,
+    phase: state.phase,
     element1: state.element1 ? { selector: state.element1.selector } : null,
     element2: state.element2 ? { selector: state.element2.selector } : null,
-    diff:     state.diff,
-    error:    state.error,
+    diff: state.diff,
+    error: state.error,
   };
 }
 

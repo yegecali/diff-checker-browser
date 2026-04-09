@@ -2,15 +2,42 @@
   "name": "diff-checker-browser",
   "version": "1.0.0",
   "description": "Browser extension to compare two HTML elements on any page",
+  "author": "yegecali",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yegecali/diff-checker-browser.git"
+  },
   "scripts": {
     "build": "vite build && vite build --config vite.content.config.js",
-    "dev": "vite build --watch & vite build --config vite.content.config.js --watch"
+    "dev": "vite build --watch & vite build --config vite.content.config.js --watch",
+    "lint": "eslint src/**/*.js",
+    "lint:fix": "eslint src/**/*.js --fix",
+    "format": "prettier --write \"src/**/*.{js,json,css}\"",
+    "format:check": "prettier --check \"src/**/*.{js,json,css}\"",
+    "prepare": "node -e \"try { require('husky') } catch (e) { if (e.code !== 'MODULE_NOT_FOUND') throw e }\" && husky install || true",
+    "clean": "rm -rf dist public/*.js public/*.css",
+    "prebuild": "npm run clean",
+    "check": "npm run lint && npm run format:check && npm run build"
   },
   "devDependencies": {
     "@types/diff": "^7.0.2",
+    "eslint": "^8.57.0",
+    "husky": "^8.0.3",
+    "lint-staged": "^15.2.0",
+    "prettier": "^3.2.5",
     "vite": "^5.4.0"
   },
   "dependencies": {
     "diff": "^7.0.0"
+  },
+  "lint-staged": {
+    "src/**/*.js": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "src/**/*.{json,css}": [
+      "prettier --write"
+    ]
   }
 }
