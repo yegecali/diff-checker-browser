@@ -1,7 +1,12 @@
 // Auto-open side panel when diff is ready
 chrome.runtime.onMessage.addListener((msg, sender) => {
   if (msg.type === 'STATE_UPDATE' && msg.state.phase === 'SHOWING_DIFF' && sender.tab?.id) {
-    chrome.sidePanel.open({ tabId: sender.tab.id }).catch(() => {});
+    // Chrome / Edge — sidePanel API
+    if (chrome.sidePanel?.open) {
+      chrome.sidePanel.open({ tabId: sender.tab.id }).catch(() => {});
+    }
+    // Firefox — sidebarAction.open() requires a user gesture so auto-open is not
+    // possible from a background message handler; the user opens it via the popup.
   }
 });
 
