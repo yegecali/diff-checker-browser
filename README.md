@@ -72,6 +72,12 @@ Add regex patterns to highlight specific text in the diff:
 
 ### Keyboard Shortcuts
 
+Global shortcuts (configurable in browser):
+- **Ctrl+Shift+D** (Cmd+Shift+D on Mac) - Open extension popup
+- **Ctrl+Shift+1** (Cmd+Shift+1 on Mac) - Start selecting Element 1
+- **Ctrl+Shift+2** (Cmd+Shift+2 on Mac) - Start selecting Element 2
+
+In-page shortcuts:
 - **ESC** - Cancel element selection mode
 - **Enter** - Submit selector input
 

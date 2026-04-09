@@ -6,8 +6,8 @@ const RX_SLOTS = 5;
 
 // ── State ─────────────────────────────────────────────────────────────────────
 let currentTabId = null;
-let lastDiff     = null; // { changes, sel1, sel2 }
-let regexList    = [];   // string[] — loaded from storage, updated via onChanged
+let lastDiff = null; // { changes, sel1, sel2 }
+let regexList = []; // string[] — loaded from storage, updated via onChanged
 
 // ── Init ──────────────────────────────────────────────────────────────────────
 async function init() {
@@ -22,7 +22,7 @@ async function init() {
   });
 
   // User switched to a different tab
-  chrome.tabs.onActivated.addListener(async (info) => {
+  chrome.tabs.onActivated.addListener(async info => {
     currentTabId = info.tabId;
     const state = await queryState();
     render(state ?? idleState());
@@ -58,8 +58,11 @@ function idleState() {
 async function queryState() {
   const tab = await getActiveTab();
   if (!tab) return null;
-  try { return await chrome.tabs.sendMessage(tab.id, { type: 'GET_STATE' }); }
-  catch { return null; }
+  try {
+    return await chrome.tabs.sendMessage(tab.id, { type: 'GET_STATE' });
+  } catch {
+    return null;
+  }
 }
 
 async function getActiveTab() {
@@ -75,7 +78,7 @@ async function loadRegexList() {
 
 // ── Highlight engine ──────────────────────────────────────────────────────────
 function reapplyHighlights() {
-  const left  = document.getElementById('col-left');
+  const left = document.getElementById('col-left');
   const right = document.getElementById('col-right');
   if (!left || !right) return;
   applyRegexHighlights(left);
@@ -91,7 +94,11 @@ function applyRegexHighlights(container) {
 
   regexList.forEach((pattern, colorIdx) => {
     let re;
-    try { re = new RegExp(pattern, 'gi'); } catch { return; }
+    try {
+      re = new RegExp(pattern, 'gi');
+    } catch {
+      return;
+    }
 
     // Collect text nodes first (walker invalidates mid-mutation)
     const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT);
@@ -106,7 +113,10 @@ function applyRegexHighlights(container) {
       re.lastIndex = 0;
       let m;
       while ((m = re.exec(text)) !== null) {
-        if (m[0].length === 0) { re.lastIndex++; continue; }
+        if (m[0].length === 0) {
+          re.lastIndex++;
+          continue;
+        }
         if (m.index > last) parts.push(document.createTextNode(text.slice(last, m.index)));
         const span = document.createElement('span');
         span.className = `rx-hl rx-${colorIdx % RX_SLOTS}`;
@@ -132,7 +142,7 @@ function render(state) {
 
   if (!hasResult) {
     const msgs = {
-      IDLE:        'Selecciona dos elementos con el formulario de la extensión.',
+      IDLE: 'Selecciona dos elementos con el formulario de la extensión.',
       SELECTING_1: 'Seleccionando Elemento 1 en la página…',
       SELECTING_2: 'Seleccionando Elemento 2 en la página…',
     };
@@ -166,16 +176,19 @@ function flashBtn(id, msg) {
   const orig = btn.textContent;
   btn.textContent = msg;
   btn.disabled = true;
-  setTimeout(() => { btn.textContent = orig; btn.disabled = false; }, 1500);
+  setTimeout(() => {
+    btn.textContent = orig;
+    btn.disabled = false;
+  }, 1500);
 }
 
 function buildUnifiedDiff(changes, sel1, sel2) {
   const lines = [`--- ${sel1}`, `+++ ${sel2}`];
   changes.forEach(c => {
     const content = c.value.replace(/\n$/, '').split('\n');
-    if (c.removed)    content.forEach(l => lines.push(`-${l}`));
+    if (c.removed) content.forEach(l => lines.push(`-${l}`));
     else if (c.added) content.forEach(l => lines.push(`+${l}`));
-    else              content.forEach(l => lines.push(` ${l}`));
+    else content.forEach(l => lines.push(` ${l}`));
   });
   return lines.join('\n');
 }
@@ -185,7 +198,8 @@ function enrichWithWordDiff(changes) {
   const result = [];
   let i = 0;
   while (i < changes.length) {
-    const cur = changes[i], next = changes[i + 1];
+    const cur = changes[i],
+      next = changes[i + 1];
     if (cur.removed && next?.added) {
       result.push({ type: 'word-diff', wordDiff: diffWords(cur.value, next.value) });
       i += 2;
@@ -199,55 +213,87 @@ function enrichWithWordDiff(changes) {
 
 function buildColHTML(enriched, side) {
   const isLeft = side === 'left';
-  return enriched.map(item => {
-    if (item.type === 'word-diff') {
-      const cls = isLeft ? 'd-del' : 'd-ins';
-      const g   = isLeft ? '-' : '+';
-      const html = item.wordDiff.map(w => {
-        if (isLeft && w.added)    return '';
-        if (!isLeft && w.removed) return '';
-        const t = escHtml(w.value);
-        if (w.removed) return `<mark class="d-word-del">${t}</mark>`;
-        if (w.added)   return `<mark class="d-word-ins">${t}</mark>`;
-        return t;
-      }).join('');
-      return html.split('\n').filter(l => l.trim()).map(l =>
-        `<div class="d-line ${cls}"><span class="d-g">${g}</span><span class="d-c">${l}</span></div>`
-      ).join('');
-    }
-    const { change: c } = item;
-    if (c.added && isLeft)    return '';
-    if (c.removed && !isLeft) return '';
-    const lines = c.value.replace(/\n$/, '').split('\n');
-    if (c.removed) return lines.map(l => `<div class="d-line d-del"><span class="d-g">-</span><span class="d-c">${escHtml(l)}</span></div>`).join('');
-    if (c.added)   return lines.map(l => `<div class="d-line d-ins"><span class="d-g">+</span><span class="d-c">${escHtml(l)}</span></div>`).join('');
-    return lines.map(l => `<div class="d-line d-eq"><span class="d-g"> </span><span class="d-c">${escHtml(l)}</span></div>`).join('');
-  }).join('');
+  return enriched
+    .map(item => {
+      if (item.type === 'word-diff') {
+        const cls = isLeft ? 'd-del' : 'd-ins';
+        const g = isLeft ? '-' : '+';
+        const html = item.wordDiff
+          .map(w => {
+            if (isLeft && w.added) return '';
+            if (!isLeft && w.removed) return '';
+            const t = escHtml(w.value);
+            if (w.removed) return `<mark class="d-word-del">${t}</mark>`;
+            if (w.added) return `<mark class="d-word-ins">${t}</mark>`;
+            return t;
+          })
+          .join('');
+        return html
+          .split('\n')
+          .filter(l => l.trim())
+          .map(
+            l =>
+              `<div class="d-line ${cls}"><span class="d-g">${g}</span><span class="d-c">${l}</span></div>`
+          )
+          .join('');
+      }
+      const { change: c } = item;
+      if (c.added && isLeft) return '';
+      if (c.removed && !isLeft) return '';
+      const lines = c.value.replace(/\n$/, '').split('\n');
+      if (c.removed)
+        return lines
+          .map(
+            l =>
+              `<div class="d-line d-del"><span class="d-g">-</span><span class="d-c">${escHtml(l)}</span></div>`
+          )
+          .join('');
+      if (c.added)
+        return lines
+          .map(
+            l =>
+              `<div class="d-line d-ins"><span class="d-g">+</span><span class="d-c">${escHtml(l)}</span></div>`
+          )
+          .join('');
+      return lines
+        .map(
+          l =>
+            `<div class="d-line d-eq"><span class="d-g"> </span><span class="d-c">${escHtml(l)}</span></div>`
+        )
+        .join('');
+    })
+    .join('');
 }
 
 function renderDiff(changes, el1, el2) {
   const enriched = enrichWithWordDiff(changes);
 
-  let adds = 0, dels = 0;
+  let adds = 0,
+    dels = 0;
   enriched.forEach(item => {
     if (item.type === 'word-diff') {
-      item.wordDiff.forEach(w => { if (w.added) adds++; if (w.removed) dels++; });
-    } else if (item.change.added)   adds += item.change.value.split('\n').filter(Boolean).length;
-      else if (item.change.removed) dels += item.change.value.split('\n').filter(Boolean).length;
+      item.wordDiff.forEach(w => {
+        if (w.added) adds++;
+        if (w.removed) dels++;
+      });
+    } else if (item.change.added) adds += item.change.value.split('\n').filter(Boolean).length;
+    else if (item.change.removed) dels += item.change.value.split('\n').filter(Boolean).length;
   });
 
   const noChanges = adds === 0 && dels === 0;
 
-  document.getElementById('stats').textContent = noChanges ? 'Sin diferencias' : `-${dels}  +${adds}`;
-  document.getElementById('sel1').textContent  = el1?.selector ?? '';
-  document.getElementById('sel2').textContent  = el2?.selector ?? '';
+  document.getElementById('stats').textContent = noChanges
+    ? 'Sin diferencias'
+    : `-${dels}  +${adds}`;
+  document.getElementById('sel1').textContent = el1?.selector ?? '';
+  document.getElementById('sel2').textContent = el2?.selector ?? '';
 
   document.getElementById('no-changes').classList.toggle('hidden', !noChanges);
-  document.getElementById('cols-wrap').classList.toggle('hidden',   noChanges);
-  document.getElementById('copy-btn').classList.toggle('hidden',    noChanges);
+  document.getElementById('cols-wrap').classList.toggle('hidden', noChanges);
+  document.getElementById('copy-btn').classList.toggle('hidden', noChanges);
 
   if (!noChanges) {
-    document.getElementById('col-left').innerHTML  = buildColHTML(enriched, 'left');
+    document.getElementById('col-left').innerHTML = buildColHTML(enriched, 'left');
     document.getElementById('col-right').innerHTML = buildColHTML(enriched, 'right');
     reapplyHighlights(); // apply saved regex patterns on fresh render
   }
@@ -255,8 +301,10 @@ function renderDiff(changes, el1, el2) {
 
 function escHtml(str) {
   return String(str)
-    .replace(/&/g, '&amp;').replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
 }
 
 init();

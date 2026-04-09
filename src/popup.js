@@ -1,16 +1,16 @@
 const STORAGE_KEY_SELECTORS = 'hdc_saved_selectors';
-const STORAGE_KEY_REGEX     = 'hdc_regex_list';
+const STORAGE_KEY_REGEX = 'hdc_regex_list';
 const RX_SLOTS = 5;
 
 let regexList = [];
 
 // ── Init ──────────────────────────────────────────────────────────────────────
 async function init() {
-  chrome.runtime.onMessage.addListener((msg) => {
+  chrome.runtime.onMessage.addListener(msg => {
     if (msg.type === 'STATE_UPDATE') render(msg.state);
   });
 
-  const tab   = await getActiveTab();
+  const tab = await getActiveTab();
   const state = await queryState();
   render(state ?? idleState());
 
@@ -35,14 +35,21 @@ function idleState() {
 async function queryState() {
   const tab = await getActiveTab();
   if (!tab) return null;
-  try { return await chrome.tabs.sendMessage(tab.id, { type: 'GET_STATE' }); }
-  catch { return null; }
+  try {
+    return await chrome.tabs.sendMessage(tab.id, { type: 'GET_STATE' });
+  } catch {
+    return null;
+  }
 }
 
 // ── Selector persistence ───────────────────────────────────────────────────────
 function urlKey(url) {
-  try { const u = new URL(url); return u.origin + u.pathname; }
-  catch { return url; }
+  try {
+    const u = new URL(url);
+    return u.origin + u.pathname;
+  } catch {
+    return url;
+  }
 }
 
 async function loadSavedSelectors(tab) {
@@ -80,7 +87,9 @@ function handleRegexAdd() {
 
   if (!pattern) return;
 
-  try { new RegExp(pattern); } catch {
+  try {
+    new RegExp(pattern);
+  } catch {
     showRxError('Regex inválido');
     return;
   }
@@ -114,13 +123,16 @@ function showRxError(msg) {
 
 function renderRegexChips() {
   const container = document.getElementById('rx-chips');
-  container.innerHTML = regexList.map((pat, i) =>
-    `<span class="rx-chip rx-chip-${i % RX_SLOTS}">` +
-    `<span class="rx-chip-swatch"></span>` +
-    `<span class="rx-chip-text">${escHtml(pat)}</span>` +
-    `<button class="rx-chip-del" data-i="${i}" title="Eliminar">×</button>` +
-    `</span>`
-  ).join('');
+  container.innerHTML = regexList
+    .map(
+      (pat, i) =>
+        `<span class="rx-chip rx-chip-${i % RX_SLOTS}">` +
+        `<span class="rx-chip-swatch"></span>` +
+        `<span class="rx-chip-text">${escHtml(pat)}</span>` +
+        `<button class="rx-chip-del" data-i="${i}" title="Eliminar">×</button>` +
+        `</span>`
+    )
+    .join('');
   container.classList.toggle('hidden', regexList.length === 0);
 }
 
@@ -132,8 +144,10 @@ function updateNextDot() {
 
 function escHtml(str) {
   return String(str)
-    .replace(/&/g, '&amp;').replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
 }
 
 // ── Render ────────────────────────────────────────────────────────────────────
@@ -141,9 +155,9 @@ function render(state) {
   const { phase, element1, element2, error } = state;
 
   const statusMap = {
-    IDLE:         ['Selecciona dos elementos para comparar', 'idle'],
-    SELECTING_1:  ['Haz click en un elemento de la página…', 'picking'],
-    SELECTING_2:  ['Ahora selecciona el Elemento 2…', 'picking'],
+    IDLE: ['Selecciona dos elementos para comparar', 'idle'],
+    SELECTING_1: ['Haz click en un elemento de la página…', 'picking'],
+    SELECTING_2: ['Ahora selecciona el Elemento 2…', 'picking'],
     SHOWING_DIFF: ['Diff listo — revisa el panel lateral', 'done'],
   };
   const [msg, cls] = statusMap[phase] ?? ['', 'idle'];
@@ -159,12 +173,17 @@ function render(state) {
   const pick2 = document.getElementById('pick2');
   pick1.disabled = phase === 'SELECTING_1' || phase === 'SHOWING_DIFF';
   pick1.classList.toggle('active', phase === 'SELECTING_1');
-  pick2.disabled = phase === 'SELECTING_2' || phase === 'SHOWING_DIFF' || (phase === 'IDLE' && !element1);
+  pick2.disabled =
+    phase === 'SELECTING_2' || phase === 'SHOWING_DIFF' || (phase === 'IDLE' && !element1);
   pick2.classList.toggle('active', phase === 'SELECTING_2');
 
   const errBox = document.getElementById('error-box');
-  if (error) { errBox.textContent = error; errBox.classList.remove('hidden'); }
-  else        { errBox.classList.add('hidden'); }
+  if (error) {
+    errBox.textContent = error;
+    errBox.classList.remove('hidden');
+  } else {
+    errBox.classList.add('hidden');
+  }
 
   document.getElementById('diff-hint').classList.toggle('hidden', phase !== 'SHOWING_DIFF');
   document.getElementById('reset-btn').classList.toggle('hidden', phase === 'IDLE');
@@ -184,8 +203,13 @@ function setStatus(text, cls) {
 
 function setBadge(id, selector) {
   const badge = document.getElementById(id);
-  if (selector) { badge.textContent = selector; badge.classList.add('selected'); }
-  else          { badge.textContent = 'no seleccionado'; badge.classList.remove('selected'); }
+  if (selector) {
+    badge.textContent = selector;
+    badge.classList.add('selected');
+  } else {
+    badge.textContent = 'no seleccionado';
+    badge.classList.remove('selected');
+  }
 }
 
 // ── Messaging ─────────────────────────────────────────────────────────────────
@@ -197,7 +221,12 @@ async function send(msg) {
   } catch {
     const ok = await tryInject(tab);
     if (ok) {
-      try { await chrome.tabs.sendMessage(tab.id, msg); return; } catch { /* fall through */ }
+      try {
+        await chrome.tabs.sendMessage(tab.id, msg);
+        return;
+      } catch {
+        /* fall through */
+      }
     }
     setStatus('No se puede acceder a esta página.', 'error');
   }
@@ -220,8 +249,12 @@ async function getActiveTab() {
 }
 
 // ── Events ────────────────────────────────────────────────────────────────────
-document.getElementById('pick1').addEventListener('click', () => send({ type: 'START_PICK', slot: 1 }));
-document.getElementById('pick2').addEventListener('click', () => send({ type: 'START_PICK', slot: 2 }));
+document
+  .getElementById('pick1')
+  .addEventListener('click', () => send({ type: 'START_PICK', slot: 1 }));
+document
+  .getElementById('pick2')
+  .addEventListener('click', () => send({ type: 'START_PICK', slot: 2 }));
 
 document.getElementById('use1').addEventListener('click', () => {
   const val = document.getElementById('selector1').value.trim();
